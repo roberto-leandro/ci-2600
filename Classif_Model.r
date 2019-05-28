@@ -26,10 +26,8 @@ View(data)
 ommitedMissingData <- na.omit(data)
 # View(ommitedMissingData)
 
-# NAs filled with random value from observed data
-randomMissingData  <- data
-#View(randomMissingData)
-
+# NAs filled with 0s
+# TODO
 
 # NAs filled with medians
 medianMissingData <- na.roughfix(data)
@@ -44,4 +42,4 @@ for(i in 1:ncol(meansMissingData)){
 
 View(meansMissingData)
 
-# NAs
+# NAs filled with k-means
