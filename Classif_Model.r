@@ -1,4 +1,8 @@
 install.packages("randomForest")
+install.packages("VIM")
+install.packages("mice")
+library(VIM)
+library(mice)
 library(randomForest)
 library(dplyr)
 
@@ -44,9 +48,11 @@ View(meansMissingData)
 
 # NAs filled with k-nearest
 library("VIM")
-knearestMissingdata <- completeData
-kNN(knearestMissingdata, variable = c("NonD","Gest"))
+knearestMissingdata <- kNN(data)
+
 
 # NAs filled with predictive mean matching
-pmmMissingdata <- completeData
+pmmMissingdata <- data
 pmmMissingdata <- mice(pmmMissingdata, m=5, maxit = 50, method = 'pmm')
+
+
