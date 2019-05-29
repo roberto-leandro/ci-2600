@@ -42,4 +42,11 @@ for(i in 1:ncol(meansMissingData)){
 
 View(meansMissingData)
 
-# NAs filled with k-means
+# NAs filled with k-nearest
+library("VIM")
+knearestMissingdata <- completeData
+kNN(knearestMissingdata, variable = c("NonD","Gest"))
+
+# NAs filled with predictive mean matching
+pmmMissingdata <- completeData
+pmmMissingdata <- mice(pmmMissingdata, m=5, maxit = 50, method = 'pmm')
