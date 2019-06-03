@@ -1,4 +1,8 @@
 install.packages("randomForest")
+install.packages("VIM")
+install.packages("mice")
+library(VIM)
+library(mice)
 library(randomForest)
 library(dplyr)
 
@@ -43,6 +47,7 @@ for(i in 1:ncol(meansMissingData)){
 }
 View(meansMissingData)
 
+<<<<<<< HEAD
 # NAs filled with modes
 
 Mode <- function(x, na.rm = FALSE) {
@@ -63,3 +68,27 @@ for(i in 1:ncol(modesMissingData)){
 View(modesMissingData)
 
 # NAs filled with k-means
+=======
+# NAs filled with k-nearest
+library("VIM")
+knearestMissingdata <- kNN(data)
+
+
+# NAs filled with predictive mean matching
+# Run the pmm algorithm using mice
+pmmMissingdata <- mice(data, m=5, maxit = 8, method = 'pmm')
+#summary(pmmMissingdata)
+
+# Fill in the 5 dataframes created
+pmmData1 <- complete(pmmMissingdata,1)
+pmmData2 <- complete(pmmMissingdata,2)
+pmmData3 <- complete(pmmMissingdata,3)
+pmmData4 <- complete(pmmMissingdata,4)
+pmmData5 <- complete(pmmMissingdata,5)
+
+
+
+
+
+
+>>>>>>> untestedImputingMethods
