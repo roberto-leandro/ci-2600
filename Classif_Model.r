@@ -52,7 +52,19 @@ knearestMissingdata <- kNN(data)
 
 
 # NAs filled with predictive mean matching
-pmmMissingdata <- data
-pmmMissingdata <- mice(pmmMissingdata, m=5, maxit = 50, method = 'pmm')
+# Run the pmm algorithm using mice
+pmmMissingdata <- mice(data, m=5, maxit = 8, method = 'pmm')
+#summary(pmmMissingdata)
+
+# Fill in the 5 dataframes created
+pmmData1 <- complete(pmmMissingdata,1)
+pmmData2 <- complete(pmmMissingdata,2)
+pmmData3 <- complete(pmmMissingdata,3)
+pmmData4 <- complete(pmmMissingdata,4)
+pmmData5 <- complete(pmmMissingdata,5)
+
+
+
+
 
 
