@@ -79,7 +79,7 @@ for(i in 1:ncol(mode_na_data)){
 # NAs filled with k-nearest
 library("VIM")
 knearest_na_data <- kNN(raw_numeric_data)
-
+knearest_na_data <- knearest_na_data[,0:59]
 
 # NAs filled with predictive mean matching
 # Run the pmm algorithm using mice
@@ -108,6 +108,10 @@ log2.pmm_na_data_2    <- log2(pmm_na_data_2)
 log2.pmm_na_data_3    <- log2(pmm_na_data_3)
 log2.pmm_na_data_4    <- log2(pmm_na_data_4)
 log2.pmm_na_data_5    <- log2(pmm_na_data_5)
+
+# log2.zero_na_data has -inf values, so we put them at zero
+is.na(log2.zero_na_data) <- sapply(log2.zero_na_data, is.infinite)
+log2.zero_na_data[is.na(log2.zero_na_data)] <- 0
 
 # Center-scale (aka z-score)
 library(BBmisc)
