@@ -79,6 +79,8 @@ for(i in 1:ncol(mode_na_data)){
 # NAs filled with k-nearest
 library("VIM")
 knearest_na_data <- kNN(raw_numeric_data)
+
+# KNN returns columns with booleans indicating which columns were imputed, so we 
 knearest_na_data <- knearest_na_data[,0:59]
 
 # NAs filled with predictive mean matching
@@ -150,8 +152,8 @@ svm_model.log2.omit_na_data <- svm(na_labels~.,
 svm_model.log2.omit_na_data.pred <- predict(svm_model.log2.omit_na_data,
                                             log2.omit_na_data)
 
-confusionMatrix(svm_model.log2.omit_na_data.pred,
-                na_labels)
+conf_matrix.log2.omit_na_data <- confusionMatrix(svm_model.log2.omit_na_data.pred,
+                                 na_labels)
 
 # Omit NAs z-score
 svm_model.zscore.omit_na_data <- svm(na_labels~.,
@@ -166,10 +168,10 @@ svm_model.zscore.omit_na_data <- svm(na_labels~.,
                                    na.action = na.omit)
 
 svm_model.zscore.omit_na_data.pred <- predict(svm_model.zscore.omit_na_data,
-                                            raw_numeric_data)
+                                              zscore.omit_na_data)
 
-confusionMatrix(svm_model.zscore.omit_na_data.pred,
-                na_labels)
+conf_matrix.zscore.omit_na_data <- confusionMatrix(svm_model.zscore.omit_na_data.pred,
+                                   na_labels)
 
 
 # Zero NAs log2
@@ -187,8 +189,8 @@ svm_model.log2.zero_na_data <- svm(labels~.,
 svm_model.log2.zero_na_data.pred <- predict(svm_model.log2.zero_na_data,
                                             log2.zero_na_data)
 
-confusionMatrix(svm_model.log2.zero_na_data.pred,
-                labels)
+conf_matrix.log2.zero_na_data <- confusionMatrix(svm_model.log2.zero_na_data.pred,
+                                  labels)
 
 # Zero NAs zscore
 svm_model.zscore.zero_na_data <- svm(labels~.,
@@ -205,8 +207,8 @@ svm_model.zscore.zero_na_data <- svm(labels~.,
 svm_model.zscore.zero_na_data.pred <- predict(svm_model.zscore.zero_na_data,
                                             zscore.zero_na_data)
 
-confusionMatrix(svm_model.zscore.zero_na_data.pred,
-                labels)
+conf_matrix.zscore.zero_na_data <- confusionMatrix(svm_model.zscore.zero_na_data.pred,
+                                labels)
 
 # Median NAs log2
 svm_model.log2.median_na_data <- svm(labels~.,
@@ -223,8 +225,8 @@ svm_model.log2.median_na_data <- svm(labels~.,
 svm_model.log2.median_na_data.pred <- predict(svm_model.log2.median_na_data,
                                             log2.median_na_data)
 
-confusionMatrix(svm_model.log2.median_na_data.pred,
-                labels)
+conf_matrix.log2.median_na_data <- confusionMatrix(svm_model.log2.median_na_data.pred,
+                                   labels)
 
 # Median NAs zscore
 svm_model.zscore.median_na_data <- svm(labels~.,
@@ -241,8 +243,8 @@ svm_model.zscore.median_na_data <- svm(labels~.,
 svm_model.zscore.median_na_data.pred <- predict(svm_model.zscore.median_na_data,
                                               zscore.median_na_data)
 
-confusionMatrix(svm_model.zscore.median_na_data.pred,
-                labels)
+conf_matrix.zscore.median_na_data <- confusionMatrix(svm_model.zscore.median_na_data.pred,
+                                     labels)
 
 # Mean NAs log2
 svm_model.log2.mean_na_data <- svm(labels~.,
@@ -259,8 +261,8 @@ svm_model.log2.mean_na_data <- svm(labels~.,
 svm_model.log2.mean_na_data.pred <- predict(svm_model.log2.mean_na_data,
                                             log2.mean_na_data)
 
-confusionMatrix(svm_model.log2.mean_na_data.pred,
-                labels)
+conf_matrix.log2.mean_na_data <- confusionMatrix(svm_model.log2.mean_na_data.pred,
+                                 labels)
 
 # Mean NAs zscore
 svm_model.zscore.mean_na_data <- svm(labels~.,
@@ -277,8 +279,8 @@ svm_model.zscore.mean_na_data <- svm(labels~.,
 svm_model.zscore.mean_na_data.pred <- predict(svm_model.zscore.mean_na_data,
                                             zscore.mean_na_data)
 
-confusionMatrix(svm_model.zscore.mean_na_data.pred,
-                labels)
+conf_matrix.zscore.mean_na_data <- confusionMatrix(svm_model.zscore.mean_na_data.pred,
+                                        labels)
 
 # Mode NAs log2
 svm_model.log2.mode_na_data <- svm(labels~.,
@@ -295,8 +297,8 @@ svm_model.log2.mode_na_data <- svm(labels~.,
 svm_model.log2.mode_na_data.pred <- predict(svm_model.log2.mode_na_data,
                                             log2.mode_na_data)
 
-confusionMatrix(svm_model.log2.mode_na_data.pred,
-                labels)
+conf_matrix.log2.mode_na_data <- confusionMatrix(svm_model.log2.mode_na_data.pred,
+                                        labels)
 
 # Mode NAs zscore
 svm_model.zscore.mode_na_data <- svm(labels~.,
@@ -313,8 +315,8 @@ svm_model.zscore.mode_na_data <- svm(labels~.,
 svm_model.zscore.mode_na_data.pred <- predict(svm_model.zscore.mode_na_data,
                                             zscore.mode_na_data)
 
-confusionMatrix(svm_model.zscore.mode_na_data.pred,
-                labels)
+conf_matrix.zscore.mode_na_data <- confusionMatrix(svm_model.zscore.mode_na_data.pred,
+                                   labels)
 
 # K-nearest NAs log2
 svm_model.log2.knearest_na_data <- svm(labels~.,
@@ -331,8 +333,8 @@ svm_model.log2.knearest_na_data <- svm(labels~.,
 svm_model.log2.knearest_na_data.pred <- predict(svm_model.log2.knearest_na_data,
                                             log2.knearest_na_data)
 
-confusionMatrix(svm_model.log2.knearest_na_data.pred,
-                labels)
+conf_matrix.log2.knearest_na_data <- confusionMatrix(svm_model.log2.knearest_na_data.pred,
+                                     labels)
 
 # K-nearest NAs zscore
 svm_model.zscore.knearest_na_data <- svm(labels~.,
@@ -349,8 +351,8 @@ svm_model.zscore.knearest_na_data <- svm(labels~.,
 svm_model.zscore.knearest_na_data.pred <- predict(svm_model.zscore.knearest_na_data,
                                                 zscore.knearest_na_data)
 
-confusionMatrix(svm_model.zscore.knearest_na_data.pred,
-                labels)
+conf_matrix.zscore.knearest_na_data <- confusionMatrix(svm_model.zscore.knearest_na_data.pred,
+                                       labels)
 
 # PMM NAs log2
 # PMM 1
@@ -368,8 +370,8 @@ svm_model.log2.pmm_na_data_1 <- svm(labels~.,
 svm_model.log2.pmm_na_data_1.pred <- predict(svm_model.log2.pmm_na_data_1,
                                                 log2.pmm_na_data_1)
 
-confusionMatrix(svm_model.log2.pmm_na_data_1.pred,
-                labels)
+conf_matrix.log2.pmm_na_data_1 <- confusionMatrix(svm_model.log2.pmm_na_data_1.pred,
+                                  labels)
 
 ## PM 2
 svm_model.log2.pmm_na_data_2 <- svm(labels~.,
@@ -386,8 +388,8 @@ svm_model.log2.pmm_na_data_2 <- svm(labels~.,
 svm_model.log2.pmm_na_data_2.pred <- predict(svm_model.log2.pmm_na_data_2,
                                              log2.pmm_na_data_2)
 
-confusionMatrix(svm_model.log2.pmm_na_data_2.pred,
-                labels)
+conf_matrix.log2.pmm_na_data_2 <- confusionMatrix(svm_model.log2.pmm_na_data_2.pred,
+                                  labels)
 
 ## PM 3
 svm_model.log2.pmm_na_data_3 <- svm(labels~.,
@@ -404,8 +406,8 @@ svm_model.log2.pmm_na_data_3 <- svm(labels~.,
 svm_model.log2.pmm_na_data_3.pred <- predict(svm_model.log2.pmm_na_data_3,
                                              log2.pmm_na_data_3)
 
-confusionMatrix(svm_model.log2.pmm_na_data_3.pred,
-                labels)
+conf_matrix.log2.pmm_na_data_3 <- confusionMatrix(svm_model.log2.pmm_na_data_3.pred,
+                                  labels)
 
 ## PM 4
 svm_model.log2.pmm_na_data_4 <- svm(labels~.,
@@ -422,8 +424,8 @@ svm_model.log2.pmm_na_data_4 <- svm(labels~.,
 svm_model.log2.pmm_na_data_4.pred <- predict(svm_model.log2.pmm_na_data_4,
                                              log2.pmm_na_data_4)
 
-confusionMatrix(svm_model.log2.pmm_na_data_4.pred,
-                labels)
+conf_matrix.log2.pmm_na_data_4 <- confusionMatrix(svm_model.log2.pmm_na_data_4.pred,
+                                  labels)
 
 ## PM 5
 svm_model.log2.pmm_na_data_5 <- svm(labels~.,
@@ -440,9 +442,8 @@ svm_model.log2.pmm_na_data_5 <- svm(labels~.,
 svm_model.log2.pmm_na_data_5.pred <- predict(svm_model.log2.pmm_na_data_5,
                                              log2.pmm_na_data_5)
 
-confusionMatrix(svm_model.log2.pmm_na_data_5.pred,
-                labels)
-
+conf_matrix.log2.pmm_na_data_5 <- confusionMatrix(svm_model.log2.pmm_na_data_5.pred,
+                                  labels)
 
 # PMM NAs zscore
 # PMM 1
@@ -460,8 +461,8 @@ svm_model.zscore.pmm_na_data_1 <- svm(labels~.,
 svm_model.zscore.pmm_na_data_1.pred <- predict(svm_model.zscore.pmm_na_data_1,
                                              zscore.pmm_na_data_1)
 
-confusionMatrix(svm_model.zscore.pmm_na_data_1.pred,
-                labels)
+conf_matrix.zscore.pmm_na_data_1 <- confusionMatrix(svm_model.zscore.pmm_na_data_1.pred,
+                                    labels)
 
 ## PM 2
 svm_model.zscore.pmm_na_data_2 <- svm(labels~.,
@@ -478,8 +479,8 @@ svm_model.zscore.pmm_na_data_2 <- svm(labels~.,
 svm_model.zscore.pmm_na_data_2.pred <- predict(svm_model.zscore.pmm_na_data_2,
                                              zscore.pmm_na_data_2)
 
-confusionMatrix(svm_model.zscore.pmm_na_data_2.pred,
-                labels)
+conf_matrix.zscore.pmm_na_data_2 <- confusionMatrix(svm_model.zscore.pmm_na_data_2.pred,
+                                    labels)
 
 ## PM 3
 svm_model.zscore.pmm_na_data_3 <- svm(labels~.,
@@ -496,8 +497,8 @@ svm_model.zscore.pmm_na_data_3 <- svm(labels~.,
 svm_model.zscore.pmm_na_data_3.pred <- predict(svm_model.zscore.pmm_na_data_3,
                                              zscore.pmm_na_data_3)
 
-confusionMatrix(svm_model.zscore.pmm_na_data_3.pred,
-                labels)
+conf_matrix.zscore.pmm_na_data_3 <- confusionMatrix(svm_model.zscore.pmm_na_data_3.pred,
+                                    labels)
 
 ## PM 4
 svm_model.zscore.pmm_na_data_4 <- svm(labels~.,
@@ -514,8 +515,8 @@ svm_model.zscore.pmm_na_data_4 <- svm(labels~.,
 svm_model.zscore.pmm_na_data_4.pred <- predict(svm_model.zscore.pmm_na_data_4,
                                              zscore.pmm_na_data_4)
 
-confusionMatrix(svm_model.zscore.pmm_na_data_4.pred,
-                labels)
+conf_matrix.zscore.pmm_na_data_4 <- confusionMatrix(svm_model.zscore.pmm_na_data_4.pred,
+                                    labels)
 
 ## PM 5
 svm_model.zscore.pmm_na_data_5 <- svm(labels~.,
@@ -532,20 +533,5 @@ svm_model.zscore.pmm_na_data_5 <- svm(labels~.,
 svm_model.zscore.pmm_na_data_5.pred <- predict(svm_model.zscore.pmm_na_data_5,
                                              zscore.pmm_na_data_5)
 
-confusionMatrix(svm_model.zscore.pmm_na_data_5.pred,
-                labels)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+conf_matrix.zscore.pmm_na_data_5 <- confusionMatrix(svm_model.zscore.pmm_na_data_5.pred,
+                                    labels)
