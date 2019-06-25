@@ -22,6 +22,20 @@ ensembl_gene_id = raw_data$ensembl_gene_id
 
 # Make a dataframe with only the numeric data
 raw_numeric_data <- raw_data[,6:64]
+
+# Getting the sample size
+sample_size = floor(0.8 * nrow(raw_numeric_data))
+
+set.seed(420)
+
+train_index = sample(seq_len(nrow(raw_numeric_data)), size = sample_size)
+
+raw_numeric_data = raw_numeric_data[train_index,]
+raw_numeric_test_data = raw_numeric_data[-train_index,]
+
+
+
+
 #View(raw_numeric_data)
 
 ### MULTIPLE IMPUTTING METHODS
