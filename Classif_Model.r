@@ -535,3 +535,124 @@ svm_model.zscore.pmm_na_data_5.pred <- predict(svm_model.zscore.pmm_na_data_5,
 
 conf_matrix.zscore.pmm_na_data_5 <- confusionMatrix(svm_model.zscore.pmm_na_data_5.pred,
                                     labels)
+
+
+
+plot(conf_matrix.zscore.mode_na_data$table)
+
+
+
+
+
+
+
+
+
+results = data.frame(
+  
+  "Imputing method" = c("Na Omit(Log2)",
+                        "Na Omit(Z-Score)",
+                        "Na Zero(Log2)",
+                        "Na Zero(Z-Score)",
+                        "Median(Log2)",
+                        "Median(Z-Score)",
+                        "Mean(Log2)",
+                        "Mean(Z-Score)",
+                        "Mode(Log2)",
+                        "Mode(Z-Score)",
+                        "KNN(Log2)",
+                        "KNN(Z-Score)",
+                        "PMM(Log2)",
+                        "PMM(Z-Score)"),
+  
+  "Accuracy" = c(0.9932, 
+                 0.9911, 
+                 0.9929, 
+                 0.9912, 
+                 0.9877, 
+                 0.986, 
+                 0.9939, 
+                 0.9922, 
+                 0.9932,
+                 0.9857,
+                 0.9925,
+                 0.9894,
+                 0.9898,
+                 0.9867),
+  
+  "Kappa" = c(0.9599,
+              0.9475,
+              0.9599,
+              0.95,
+              0.9294,
+              0.9192,
+              0.9657,
+              0.9559,
+              0.9617,
+              0.9171,
+              0.9578,
+              0.9399,
+              0.9417,
+              0.9234),
+  
+  "Sensitivity" = c(0.9996,
+                    0.9992,
+                    0.9992,
+                    0.9992,
+                    0.9996,
+                    0.9992,
+                    0.9996,
+                    0.9992,
+                    0.9996,
+                    0.9992,
+                    0.9996,
+                    0.9992,
+                    0.9996,
+                    0.9992),
+  
+  "Specificity" = c(0.9331,
+                    0.9155,
+                    0.9365,
+                    0.9197,
+                    0.8829,
+                    0.8696,
+                    0.9431,
+                    0.9298,
+                    0.9365,
+                    0.8662,
+                    0.9298,
+                    0.9030,
+                    0.9030,
+                    0.8763)
+)
+
+library(ggplot2)
+results <-results[order(-results$Accuracy),]
+#counts <- table(results$Accuracy, results$Kappa, results$Sensitivity, results$Specificity)
+counts <- data.matrix(results[,2])
+
+hcl_palettes("sequential (multi-hue)", n = 7, plot = TRUE)
+hcl_palettes("Oranges")
+barplot(counts, 
+        main = "Desempeño de los distintos métodos de preprocesamiento", 
+        xlab = "Desempeño",
+        names.arg = results[,1],
+        col = c("#8f4f00", "#a35a00","#b86500" ,"#cc7000" ,"#e07b00" ,"#f58700" ,"#ff8c00" ,"#ff9a1f" ,"#ffa333" ,"#ffac47" ,"#ffb65c" ,"#ffbf70" ,"#ffc885" ,"#ffd199","#ffdaad"),
+        xlim = c(0,1),
+        legend = rownames(counts),
+        beside = TRUE,
+        horiz=TRUE)
+
+
+  barplot(counts, horiz=TRUE,  space = 0.4,  yaxp=c(0,25,1), main = "Title", las=1,  
+        cex.names=0.8, ylab="y label")
+
+
+
+
+
+
+
+
+
+
