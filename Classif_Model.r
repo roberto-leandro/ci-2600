@@ -7,7 +7,7 @@ install.packages("caret")
 library(randomForest)
 library(dplyr)
 
-### READING DATA
+###----------------------------- DATA INPUT -----------------------------###
 
 # Read the csv
 raw_data <- read.csv("nci60_binary_class_training_set.csv", header = TRUE, sep = ",")
@@ -16,29 +16,12 @@ raw_data <- read.csv("nci60_binary_class_training_set.csv", header = TRUE, sep =
 raw_data <- select(raw_data, -LC.NCI.H23)
 #View(raw_data)
 
-# Extract non-numeric columns
-labels <- raw_data$Labels
-ensembl_gene_id = raw_data$ensembl_gene_id
-
 # Make a dataframe with only the numeric data
 raw_numeric_data <- raw_data[,6:64]
 
-# Getting the sample size
-sample_size = floor(0.8 * nrow(raw_numeric_data))
-
-set.seed(420)
-
-train_index = sample(seq_len(nrow(raw_numeric_data)), size = sample_size)
-
-raw_numeric_data = raw_numeric_data[train_index,]
-raw_numeric_test_data = raw_numeric_data[-train_index,]
-
-
-
-
 #View(raw_numeric_data)
 
-### MULTIPLE IMPUTTING METHODS
+###----------------------------- IMPUTTING METHODS -----------------------------###
 
 # NAs ommited
 # Make a new dataframe and add the labels
@@ -110,7 +93,7 @@ pmm_na_data_3 <- complete(pmm_result,3)
 pmm_na_data_4 <- complete(pmm_result,4)
 pmm_na_data_5 <- complete(pmm_result,5)
 
-### DATA NORMALIZATION
+###----------------------------- DATA NORMALIZATION -----------------------------###
 
 # Log2
 log2.omit_na_data     <- log2(omit_na_data)   
@@ -143,35 +126,137 @@ zscore.pmm_na_data_3    <- normalize(pmm_na_data_3, method = "standardize")
 zscore.pmm_na_data_4    <- normalize(pmm_na_data_4, method = "standardize")
 zscore.pmm_na_data_5    <- normalize(pmm_na_data_5, method = "standardize")
 
+###----------------------------- TRAIN&TEST DATA PARTITIONING -----------------------------###
+
+# Add labels to one of the omit NA datasets so they also get partitioned (remember, omit NA has a different size)
+log2.omit_na_data$Labels <- na_labels
+
+# Add labels to one of the datasets so they also get partitioned
+log2.zero_na_data$Labels <- raw_data$Labels
+
+# Partition each resulting dataset, to have testing and training data
+# Make 2 partitions - 80% for training and 20% for testing
+sample_size = floor(0.8 * nrow(raw_data))
+na.sample_size = floor(0.8 * nrow(log2.omit_na_data))
+set.seed(420) # set seed so results are reproducible
+
+train_index = sample(seq_len(nrow(log2.omit_na_data)), size = na.sample_size)
+log2.train.omit_na_data        = log2.omit_na_data    [train_index,]
+log2.test.omit_na_data         = log2.omit_na_data    [-train_index,]
+
+train_index = sample(seq_len(nrow(log2.zero_na_data)), size = sample_size)
+log2.train.zero_na_data        = log2.zero_na_data    [train_index,]    
+log2.test.zero_na_data         = log2.zero_na_data    [-train_index,]                 
+
+train_index = sample(seq_len(nrow(log2.median_na_data)), size = sample_size)
+log2.train.median_na_data      = log2.median_na_data  [train_index,]                    
+log2.test.median_na_data       = log2.median_na_data  [-train_index,] 
+
+train_index = sample(seq_len(nrow(log2.mean_na_data)), size = sample_size)
+log2.train.mean_na_data        = log2.mean_na_data    [train_index,]                    
+log2.test.mean_na_data         = log2.mean_na_data    [-train_index,]
+
+train_index = sample(seq_len(nrow(log2.mode_na_data)), size = sample_size)
+log2.train.mode_na_data        = log2.mode_na_data    [train_index,]                    
+log2.test.mode_na_data         = log2.mode_na_data    [-train_index,]                 
+
+train_index = sample(seq_len(nrow(log2.knearest_na_data)), size = sample_size)
+log2.train.knearest_na_data    = log2.knearest_na_data[train_index,]                    
+log2.test.knearest_na_data     = log2.knearest_na_data[-train_index,] 
+
+train_index = sample(seq_len(nrow(log2.pmm_na_data_1)), size = sample_size)
+log2.train.pmm_na_data_1       = log2.pmm_na_data_1   [train_index,]                    
+log2.test.pmm_na_data_1        = log2.pmm_na_data_1   [-train_index,]
+
+train_index = sample(seq_len(nrow(log2.pmm_na_data_2)), size = sample_size)
+log2.train.pmm_na_data_2       = log2.pmm_na_data_2   [train_index,]                    
+log2.test.pmm_na_data_2        = log2.pmm_na_data_2   [-train_index,]  
+
+train_index = sample(seq_len(nrow(log2.pmm_na_data_3)), size = sample_size)
+log2.train.pmm_na_data_3       = log2.pmm_na_data_3   [train_index,]                    
+log2.test.pmm_na_data_3        = log2.pmm_na_data_3   [-train_index,]  
+
+train_index = sample(seq_len(nrow(log2.pmm_na_data_4)), size = sample_size)
+log2.train.pmm_na_data_4       = log2.pmm_na_data_4   [train_index,]    
+log2.test.pmm_na_data_4        = log2.pmm_na_data_4   [-train_index,]
+
+train_index = sample(seq_len(nrow(log2.pmm_na_data_5)), size = sample_size)
+log2.train.pmm_na_data_5       = log2.pmm_na_data_5   [train_index,]    
+log2.test.pmm_na_data_5        = log2.pmm_na_data_5   [-train_index,]
+
+train_index = sample(seq_len(nrow(zscore.omit_na_data)), size = na.sample_size)
+zscore.train.omit_na_data      = zscore.omit_na_data    [train_index,]
+zscore.test.omit_na_data       = zscore.omit_na_data    [-train_index,]
+
+train_index = sample(seq_len(nrow(zscore.zero_na_data)), size = sample_size)
+zscore.train.zero_na_data      = zscore.zero_na_data    [train_index,]
+zscore.test.zero_na_data       = zscore.zero_na_data    [-train_index,]
+
+train_index = sample(seq_len(nrow(zscore.median_na_data)), size = sample_size)
+zscore.train.median_na_data    = zscore.median_na_data  [train_index,]
+zscore.test.median_na_data     = zscore.median_na_data  [-train_index,]
+
+train_index = sample(seq_len(nrow(zscore.mean_na_data)), size = sample_size)
+zscore.train.mean_na_data      = zscore.mean_na_data    [train_index,]
+zscore.test.mean_na_data       = zscore.mean_na_data    [-train_index,]
+
+train_index = sample(seq_len(nrow(zscore.mode_na_data)), size = sample_size)
+zscore.train.mode_na_data      = zscore.mode_na_data    [train_index,]
+zscore.test.mode_na_data       = zscore.mode_na_data    [-train_index,]
+
+train_index = sample(seq_len(nrow(zscore.knearest_na_data)), size = sample_size)
+zscore.train.knearest_na_data  = zscore.knearest_na_data[train_index,]
+zscore.test.knearest_na_data   = zscore.knearest_na_data[-train_index,]
+
+train_index = sample(seq_len(nrow(zscore.pmm_na_data_1)), size = sample_size)
+zscore.train.pmm_na_data_1     = zscore.pmm_na_data_1   [train_index,]
+zscore.test.pmm_na_data_1      = zscore.pmm_na_data_1   [-train_index,]
+
+train_index = sample(seq_len(nrow(zscore.pmm_na_data_2)), size = sample_size)
+zscore.train.pmm_na_data_2     = zscore.pmm_na_data_2   [train_index,]
+zscore.test.pmm_na_data_2      = zscore.pmm_na_data_2   [-train_index,]
+
+train_index = sample(seq_len(nrow(zscore.pmm_na_data_3)), size = sample_size)
+zscore.train.pmm_na_data_3     = zscore.pmm_na_data_3   [train_index,]
+zscore.test.pmm_na_data_3      = zscore.pmm_na_data_3   [-train_index,]
+
+train_index = sample(seq_len(nrow(zscore.pmm_na_data_4)), size = sample_size)
+zscore.train.pmm_na_data_4     = zscore.pmm_na_data_4   [train_index,]
+zscore.test.pmm_na_data_4      = zscore.pmm_na_data_4   [-train_index,]
+
+train_index = sample(seq_len(nrow(zscore.pmm_na_data_5)), size = sample_size)
+zscore.train.pmm_na_data_5     = zscore.pmm_na_data_5   [train_index,]
+zscore.test.pmm_na_data_5      = zscore.pmm_na_data_5   [-train_index,]
+
+# Recover all the labels and remove them from their respective datasets
+train.labels = log2.train.zero_na_data$Labels
+test.labels = log2.test.zero_na_data$Labels
+na.train.labels = log2.train.omit_na_data$Labels
+na.test.labels = log2.test.omit_na_data$Labels
+
+log2.train.zero_na_data <- select(log2.train.zero_na_data, -Labels)
+log2.test.zero_na_data <- select(log2.test.zero_na_data, -Labels)
+log2.train.omit_na_data <- select(log2.train.omit_na_data, -Labels)
+log2.test.omit_na_data <- select(log2.test.omit_na_data, -Labels)
+
+# Make all the labels factors
+train.labels <- as.factor(train.labels)
+test.labels <- as.factor(test.labels)
+na.train.labels <- as.factor(na.train.labels)
+na.test.labels <- as.factor(na.test.labels)
+
+
+
+###----------------------------- SVM MODEL TRAINING -----------------------------###
+
 # Make svm models
 library(e1071)
 library(caret)
 
-# Converts labels to factor for use in confusion matrix
-labels <- as.factor(labels)
-na_labels <- as.factor(na_labels)
 
 # Omit NAs log2
-svm_model.log2.omit_na_data <- svm(na_labels~.,
-                                     data = log2.omit_na_data,
-                                     kernel = "radial",
-                                     cross = 10,
-                                     gamma = 0.2,
-                                     cost = 1,
-                                     fitted = TRUE,
-                                     probability = TRUE,
-                                     type = "C-classification",
-                                     na.action = na.omit)
-
-svm_model.log2.omit_na_data.pred <- predict(svm_model.log2.omit_na_data,
-                                            log2.omit_na_data)
-
-conf_matrix.log2.omit_na_data <- confusionMatrix(svm_model.log2.omit_na_data.pred,
-                                 na_labels)
-
-# Omit NAs z-score
-svm_model.zscore.omit_na_data <- svm(na_labels~.,
-                                   data = zscore.omit_na_data,
+svm_model.log2.omit_na_data <- svm(na.train.labels~.,
+                                   data = log2.train.omit_na_data,
                                    kernel = "radial",
                                    cross = 10,
                                    gamma = 0.2,
@@ -181,16 +266,34 @@ svm_model.zscore.omit_na_data <- svm(na_labels~.,
                                    type = "C-classification",
                                    na.action = na.omit)
 
+svm_model.log2.omit_na_data.pred <- predict(svm_model.log2.omit_na_data,
+                                            log2.train.omit_na_data)
+
+conf_matrix.log2.omit_na_data <- confusionMatrix(svm_model.log2.omit_na_data.pred,
+                                                 na.train.labels)
+
+# Omit NAs z-score
+svm_model.zscore.omit_na_data <- svm(na.train.labels~.,
+                                     data = zscore.train.omit_na_data,
+                                     kernel = "radial",
+                                     cross = 10,
+                                     gamma = 0.2,
+                                     cost = 1,
+                                     fitted = TRUE,
+                                     probability = TRUE,
+                                     type = "C-classification",
+                                     na.action = na.omit)
+
 svm_model.zscore.omit_na_data.pred <- predict(svm_model.zscore.omit_na_data,
-                                              zscore.omit_na_data)
+                                              zscore.train.omit_na_data)
 
 conf_matrix.zscore.omit_na_data <- confusionMatrix(svm_model.zscore.omit_na_data.pred,
-                                   na_labels)
+                                                   na.train.labels)
 
 
 # Zero NAs log2
-svm_model.log2.zero_na_data <- svm(labels~.,
-                                   data = log2.zero_na_data,
+svm_model.log2.zero_na_data <- svm(train.labels~.,
+                                   data = log2.train.zero_na_data,
                                    kernel = "radial",
                                    cross = 10,
                                    gamma = 0.2,
@@ -201,50 +304,14 @@ svm_model.log2.zero_na_data <- svm(labels~.,
                                    na.action = na.omit)
 
 svm_model.log2.zero_na_data.pred <- predict(svm_model.log2.zero_na_data,
-                                            log2.zero_na_data)
+                                            log2.train.zero_na_data)
 
 conf_matrix.log2.zero_na_data <- confusionMatrix(svm_model.log2.zero_na_data.pred,
-                                  labels)
+                                                 train.labels)
 
 # Zero NAs zscore
-svm_model.zscore.zero_na_data <- svm(labels~.,
-                                   data = zscore.zero_na_data,
-                                   kernel = "radial",
-                                   cross = 10,
-                                   gamma = 0.2,
-                                   cost = 1,
-                                   fitted = TRUE,
-                                   probability = TRUE,
-                                   type = "C-classification",
-                                   na.action = na.omit)
-
-svm_model.zscore.zero_na_data.pred <- predict(svm_model.zscore.zero_na_data,
-                                            zscore.zero_na_data)
-
-conf_matrix.zscore.zero_na_data <- confusionMatrix(svm_model.zscore.zero_na_data.pred,
-                                labels)
-
-# Median NAs log2
-svm_model.log2.median_na_data <- svm(labels~.,
-                                   data = log2.median_na_data,
-                                   kernel = "radial",
-                                   cross = 10,
-                                   gamma = 0.2,
-                                   cost = 1,
-                                   fitted = TRUE,
-                                   probability = TRUE,
-                                   type = "C-classification",
-                                   na.action = na.omit)
-
-svm_model.log2.median_na_data.pred <- predict(svm_model.log2.median_na_data,
-                                            log2.median_na_data)
-
-conf_matrix.log2.median_na_data <- confusionMatrix(svm_model.log2.median_na_data.pred,
-                                   labels)
-
-# Median NAs zscore
-svm_model.zscore.median_na_data <- svm(labels~.,
-                                     data = zscore.median_na_data,
+svm_model.zscore.zero_na_data <- svm(train.labels~.,
+                                     data = zscore.train.zero_na_data,
                                      kernel = "radial",
                                      cross = 10,
                                      gamma = 0.2,
@@ -254,15 +321,51 @@ svm_model.zscore.median_na_data <- svm(labels~.,
                                      type = "C-classification",
                                      na.action = na.omit)
 
+svm_model.zscore.zero_na_data.pred <- predict(svm_model.zscore.zero_na_data,
+                                              zscore.train.zero_na_data)
+
+conf_matrix.zscore.zero_na_data <- confusionMatrix(svm_model.zscore.zero_na_data.pred,
+                                                   train.labels)
+
+# Median NAs log2
+svm_model.log2.median_na_data <- svm(train.labels~.,
+                                     data = log2.train.median_na_data,
+                                     kernel = "radial",
+                                     cross = 10,
+                                     gamma = 0.2,
+                                     cost = 1,
+                                     fitted = TRUE,
+                                     probability = TRUE,
+                                     type = "C-classification",
+                                     na.action = na.omit)
+
+svm_model.log2.median_na_data.pred <- predict(svm_model.log2.median_na_data,
+                                              log2.train.median_na_data)
+
+conf_matrix.log2.median_na_data <- confusionMatrix(svm_model.log2.median_na_data.pred,
+                                                   train.labels)
+
+# Median NAs zscore
+svm_model.zscore.median_na_data <- svm(train.labels~.,
+                                       data = zscore.train.median_na_data,
+                                       kernel = "radial",
+                                       cross = 10,
+                                       gamma = 0.2,
+                                       cost = 1,
+                                       fitted = TRUE,
+                                       probability = TRUE,
+                                       type = "C-classification",
+                                       na.action = na.omit)
+
 svm_model.zscore.median_na_data.pred <- predict(svm_model.zscore.median_na_data,
-                                              zscore.median_na_data)
+                                                zscore.train.median_na_data)
 
 conf_matrix.zscore.median_na_data <- confusionMatrix(svm_model.zscore.median_na_data.pred,
-                                     labels)
+                                                     train.labels)
 
 # Mean NAs log2
-svm_model.log2.mean_na_data <- svm(labels~.,
-                                   data = log2.mean_na_data,
+svm_model.log2.mean_na_data <- svm(train.labels~.,
+                                   data = log2.train.mean_na_data,
                                    kernel = "radial",
                                    cross = 10,
                                    gamma = 0.2,
@@ -273,32 +376,32 @@ svm_model.log2.mean_na_data <- svm(labels~.,
                                    na.action = na.omit)
 
 svm_model.log2.mean_na_data.pred <- predict(svm_model.log2.mean_na_data,
-                                            log2.mean_na_data)
+                                            log2.train.mean_na_data)
 
 conf_matrix.log2.mean_na_data <- confusionMatrix(svm_model.log2.mean_na_data.pred,
-                                 labels)
+                                                 train.labels)
 
 # Mean NAs zscore
-svm_model.zscore.mean_na_data <- svm(labels~.,
-                                   data = zscore.mean_na_data,
-                                   kernel = "radial",
-                                   cross = 10,
-                                   gamma = 0.2,
-                                   cost = 1,
-                                   fitted = TRUE,
-                                   probability = TRUE,
-                                   type = "C-classification",
-                                   na.action = na.omit)
+svm_model.zscore.mean_na_data <- svm(train.labels~.,
+                                     data = zscore.train.mean_na_data,
+                                     kernel = "radial",
+                                     cross = 10,
+                                     gamma = 0.2,
+                                     cost = 1,
+                                     fitted = TRUE,
+                                     probability = TRUE,
+                                     type = "C-classification",
+                                     na.action = na.omit)
 
 svm_model.zscore.mean_na_data.pred <- predict(svm_model.zscore.mean_na_data,
-                                            zscore.mean_na_data)
+                                              zscore.train.mean_na_data)
 
 conf_matrix.zscore.mean_na_data <- confusionMatrix(svm_model.zscore.mean_na_data.pred,
-                                        labels)
+                                                   train.labels)
 
 # Mode NAs log2
-svm_model.log2.mode_na_data <- svm(labels~.,
-                                   data = log2.mode_na_data,
+svm_model.log2.mode_na_data <- svm(train.labels~.,
+                                   data = log2.train.mode_na_data,
                                    kernel = "radial",
                                    cross = 10,
                                    gamma = 0.2,
@@ -309,50 +412,32 @@ svm_model.log2.mode_na_data <- svm(labels~.,
                                    na.action = na.omit)
 
 svm_model.log2.mode_na_data.pred <- predict(svm_model.log2.mode_na_data,
-                                            log2.mode_na_data)
+                                            log2.train.mode_na_data)
 
 conf_matrix.log2.mode_na_data <- confusionMatrix(svm_model.log2.mode_na_data.pred,
-                                        labels)
+                                                 train.labels)
 
 # Mode NAs zscore
-svm_model.zscore.mode_na_data <- svm(labels~.,
-                                   data = zscore.mode_na_data,
-                                   kernel = "radial",
-                                   cross = 10,
-                                   gamma = 0.2,
-                                   cost = 1,
-                                   fitted = TRUE,
-                                   probability = TRUE,
-                                   type = "C-classification",
-                                   na.action = na.omit)
+svm_model.zscore.mode_na_data <- svm(train.labels~.,
+                                     data = zscore.train.mode_na_data,
+                                     kernel = "radial",
+                                     cross = 10,
+                                     gamma = 0.2,
+                                     cost = 1,
+                                     fitted = TRUE,
+                                     probability = TRUE,
+                                     type = "C-classification",
+                                     na.action = na.omit)
 
 svm_model.zscore.mode_na_data.pred <- predict(svm_model.zscore.mode_na_data,
-                                            zscore.mode_na_data)
+                                              zscore.train.mode_na_data)
 
 conf_matrix.zscore.mode_na_data <- confusionMatrix(svm_model.zscore.mode_na_data.pred,
-                                   labels)
+                                                   train.labels)
 
 # K-nearest NAs log2
-svm_model.log2.knearest_na_data <- svm(labels~.,
-                                   data = log2.knearest_na_data,
-                                   kernel = "radial",
-                                   cross = 10,
-                                   gamma = 0.2,
-                                   cost = 1,
-                                   fitted = TRUE,
-                                   probability = TRUE,
-                                   type = "C-classification",
-                                   na.action = na.omit)
-
-svm_model.log2.knearest_na_data.pred <- predict(svm_model.log2.knearest_na_data,
-                                            log2.knearest_na_data)
-
-conf_matrix.log2.knearest_na_data <- confusionMatrix(svm_model.log2.knearest_na_data.pred,
-                                     labels)
-
-# K-nearest NAs zscore
-svm_model.zscore.knearest_na_data <- svm(labels~.,
-                                       data = zscore.knearest_na_data,
+svm_model.log2.knearest_na_data <- svm(train.labels~.,
+                                       data = log2.train.knearest_na_data,
                                        kernel = "radial",
                                        cross = 10,
                                        gamma = 0.2,
@@ -362,34 +447,52 @@ svm_model.zscore.knearest_na_data <- svm(labels~.,
                                        type = "C-classification",
                                        na.action = na.omit)
 
+svm_model.log2.knearest_na_data.pred <- predict(svm_model.log2.knearest_na_data,
+                                                log2.train.knearest_na_data)
+
+conf_matrix.log2.knearest_na_data <- confusionMatrix(svm_model.log2.knearest_na_data.pred,
+                                                     train.labels)
+
+# K-nearest NAs zscore
+svm_model.zscore.knearest_na_data <- svm(train.labels~.,
+                                         data = zscore.train.knearest_na_data,
+                                         kernel = "radial",
+                                         cross = 10,
+                                         gamma = 0.2,
+                                         cost = 1,
+                                         fitted = TRUE,
+                                         probability = TRUE,
+                                         type = "C-classification",
+                                         na.action = na.omit)
+
 svm_model.zscore.knearest_na_data.pred <- predict(svm_model.zscore.knearest_na_data,
-                                                zscore.knearest_na_data)
+                                                  zscore.train.knearest_na_data)
 
 conf_matrix.zscore.knearest_na_data <- confusionMatrix(svm_model.zscore.knearest_na_data.pred,
-                                       labels)
+                                                       train.labels)
 
 # PMM NAs log2
 # PMM 1
-svm_model.log2.pmm_na_data_1 <- svm(labels~.,
-                                       data = log2.pmm_na_data_1,
-                                       kernel = "radial",
-                                       cross = 10,
-                                       gamma = 0.2,
-                                       cost = 1,
-                                       fitted = TRUE,
-                                       probability = TRUE,
-                                       type = "C-classification",
-                                       na.action = na.omit)
+svm_model.log2.pmm_na_data_1 <- svm(train.labels~.,
+                                    data = log2.train.pmm_na_data_1,
+                                    kernel = "radial",
+                                    cross = 10,
+                                    gamma = 0.2,
+                                    cost = 1,
+                                    fitted = TRUE,
+                                    probability = TRUE,
+                                    type = "C-classification",
+                                    na.action = na.omit)
 
 svm_model.log2.pmm_na_data_1.pred <- predict(svm_model.log2.pmm_na_data_1,
-                                                log2.pmm_na_data_1)
+                                             log2.train.pmm_na_data_1)
 
 conf_matrix.log2.pmm_na_data_1 <- confusionMatrix(svm_model.log2.pmm_na_data_1.pred,
-                                  labels)
+                                                  train.labels)
 
 ## PM 2
-svm_model.log2.pmm_na_data_2 <- svm(labels~.,
-                                    data = log2.pmm_na_data_2,
+svm_model.log2.pmm_na_data_2 <- svm(train.labels~.,
+                                    data = log2.train.pmm_na_data_2,
                                     kernel = "radial",
                                     cross = 10,
                                     gamma = 0.2,
@@ -400,14 +503,14 @@ svm_model.log2.pmm_na_data_2 <- svm(labels~.,
                                     na.action = na.omit)
 
 svm_model.log2.pmm_na_data_2.pred <- predict(svm_model.log2.pmm_na_data_2,
-                                             log2.pmm_na_data_2)
+                                             log2.train.pmm_na_data_2)
 
 conf_matrix.log2.pmm_na_data_2 <- confusionMatrix(svm_model.log2.pmm_na_data_2.pred,
-                                  labels)
+                                                  train.labels)
 
 ## PM 3
-svm_model.log2.pmm_na_data_3 <- svm(labels~.,
-                                    data = log2.pmm_na_data_3,
+svm_model.log2.pmm_na_data_3 <- svm(train.labels~.,
+                                    data = log2.train.pmm_na_data_3,
                                     kernel = "radial",
                                     cross = 10,
                                     gamma = 0.2,
@@ -418,14 +521,14 @@ svm_model.log2.pmm_na_data_3 <- svm(labels~.,
                                     na.action = na.omit)
 
 svm_model.log2.pmm_na_data_3.pred <- predict(svm_model.log2.pmm_na_data_3,
-                                             log2.pmm_na_data_3)
+                                             log2.train.pmm_na_data_3)
 
 conf_matrix.log2.pmm_na_data_3 <- confusionMatrix(svm_model.log2.pmm_na_data_3.pred,
-                                  labels)
+                                                  train.labels)
 
 ## PM 4
-svm_model.log2.pmm_na_data_4 <- svm(labels~.,
-                                    data = log2.pmm_na_data_4,
+svm_model.log2.pmm_na_data_4 <- svm(train.labels~.,
+                                    data = log2.train.pmm_na_data_4,
                                     kernel = "radial",
                                     cross = 10,
                                     gamma = 0.2,
@@ -436,14 +539,14 @@ svm_model.log2.pmm_na_data_4 <- svm(labels~.,
                                     na.action = na.omit)
 
 svm_model.log2.pmm_na_data_4.pred <- predict(svm_model.log2.pmm_na_data_4,
-                                             log2.pmm_na_data_4)
+                                             log2.train.pmm_na_data_4)
 
 conf_matrix.log2.pmm_na_data_4 <- confusionMatrix(svm_model.log2.pmm_na_data_4.pred,
-                                  labels)
+                                                  train.labels)
 
 ## PM 5
-svm_model.log2.pmm_na_data_5 <- svm(labels~.,
-                                    data = log2.pmm_na_data_5,
+svm_model.log2.pmm_na_data_5 <- svm(train.labels~.,
+                                    data = log2.train.pmm_na_data_5,
                                     kernel = "radial",
                                     cross = 10,
                                     gamma = 0.2,
@@ -454,87 +557,326 @@ svm_model.log2.pmm_na_data_5 <- svm(labels~.,
                                     na.action = na.omit)
 
 svm_model.log2.pmm_na_data_5.pred <- predict(svm_model.log2.pmm_na_data_5,
-                                             log2.pmm_na_data_5)
+                                             log2.train.pmm_na_data_5)
 
 conf_matrix.log2.pmm_na_data_5 <- confusionMatrix(svm_model.log2.pmm_na_data_5.pred,
-                                  labels)
+                                                  train.labels)
 
 # PMM NAs zscore
 # PMM 1
-svm_model.zscore.pmm_na_data_1 <- svm(labels~.,
-                                    data = zscore.pmm_na_data_1,
-                                    kernel = "radial",
-                                    cross = 10,
-                                    gamma = 0.2,
-                                    cost = 1,
-                                    fitted = TRUE,
-                                    probability = TRUE,
-                                    type = "C-classification",
-                                    na.action = na.omit)
+svm_model.zscore.pmm_na_data_1 <- svm(train.labels~.,
+                                      data = zscore.train.pmm_na_data_1,
+                                      kernel = "radial",
+                                      cross = 10,
+                                      gamma = 0.2,
+                                      cost = 1,
+                                      fitted = TRUE,
+                                      probability = TRUE,
+                                      type = "C-classification",
+                                      na.action = na.omit)
 
 svm_model.zscore.pmm_na_data_1.pred <- predict(svm_model.zscore.pmm_na_data_1,
-                                             zscore.pmm_na_data_1)
+                                               zscore.train.pmm_na_data_1)
 
 conf_matrix.zscore.pmm_na_data_1 <- confusionMatrix(svm_model.zscore.pmm_na_data_1.pred,
-                                    labels)
+                                                    train.labels)
 
 ## PM 2
-svm_model.zscore.pmm_na_data_2 <- svm(labels~.,
-                                    data = zscore.pmm_na_data_2,
-                                    kernel = "radial",
-                                    cross = 10,
-                                    gamma = 0.2,
-                                    cost = 1,
-                                    fitted = TRUE,
-                                    probability = TRUE,
-                                    type = "C-classification",
-                                    na.action = na.omit)
+svm_model.zscore.pmm_na_data_2 <- svm(train.labels~.,
+                                      data = zscore.train.pmm_na_data_2,
+                                      kernel = "radial",
+                                      cross = 10,
+                                      gamma = 0.2,
+                                      cost = 1,
+                                      fitted = TRUE,
+                                      probability = TRUE,
+                                      type = "C-classification",
+                                      na.action = na.omit)
 
 svm_model.zscore.pmm_na_data_2.pred <- predict(svm_model.zscore.pmm_na_data_2,
-                                             zscore.pmm_na_data_2)
+                                               zscore.train.pmm_na_data_2)
 
 conf_matrix.zscore.pmm_na_data_2 <- confusionMatrix(svm_model.zscore.pmm_na_data_2.pred,
-                                    labels)
+                                                    train.labels)
 
 ## PM 3
-svm_model.zscore.pmm_na_data_3 <- svm(labels~.,
-                                    data = zscore.pmm_na_data_3,
-                                    kernel = "radial",
-                                    cross = 10,
-                                    gamma = 0.2,
-                                    cost = 1,
-                                    fitted = TRUE,
-                                    probability = TRUE,
-                                    type = "C-classification",
-                                    na.action = na.omit)
+svm_model.zscore.pmm_na_data_3 <- svm(train.labels~.,
+                                      data = zscore.train.pmm_na_data_3,
+                                      kernel = "radial",
+                                      cross = 10,
+                                      gamma = 0.2,
+                                      cost = 1,
+                                      fitted = TRUE,
+                                      probability = TRUE,
+                                      type = "C-classification",
+                                      na.action = na.omit)
 
 svm_model.zscore.pmm_na_data_3.pred <- predict(svm_model.zscore.pmm_na_data_3,
-                                             zscore.pmm_na_data_3)
+                                               zscore.train.pmm_na_data_3)
 
 conf_matrix.zscore.pmm_na_data_3 <- confusionMatrix(svm_model.zscore.pmm_na_data_3.pred,
-                                    labels)
+                                                    train.labels)
 
 ## PM 4
-svm_model.zscore.pmm_na_data_4 <- svm(labels~.,
-                                    data = zscore.pmm_na_data_4,
-                                    kernel = "radial",
-                                    cross = 10,
-                                    gamma = 0.2,
-                                    cost = 1,
-                                    fitted = TRUE,
-                                    probability = TRUE,
-                                    type = "C-classification",
-                                    na.action = na.omit)
+svm_model.zscore.pmm_na_data_4 <- svm(train.labels~.,
+                                      data = zscore.train.pmm_na_data_4,
+                                      kernel = "radial",
+                                      cross = 10,
+                                      gamma = 0.2,
+                                      cost = 1,
+                                      fitted = TRUE,
+                                      probability = TRUE,
+                                      type = "C-classification",
+                                      na.action = na.omit)
 
 svm_model.zscore.pmm_na_data_4.pred <- predict(svm_model.zscore.pmm_na_data_4,
-                                             zscore.pmm_na_data_4)
+                                               zscore.train.pmm_na_data_4)
 
 conf_matrix.zscore.pmm_na_data_4 <- confusionMatrix(svm_model.zscore.pmm_na_data_4.pred,
-                                    labels)
+                                                    train.labels)
 
 ## PM 5
-svm_model.zscore.pmm_na_data_5 <- svm(labels~.,
-                                    data = zscore.pmm_na_data_5,
+svm_model.zscore.pmm_na_data_5 <- svm(train.labels~.,
+                                      data = zscore.train.pmm_na_data_5,
+                                      kernel = "radial",
+                                      cross = 10,
+                                      gamma = 0.2,
+                                      cost = 1,
+                                      fitted = TRUE,
+                                      probability = TRUE,
+                                      type = "C-classification",
+                                      na.action = na.omit)
+
+svm_model.zscore.pmm_na_data_5.pred <- predict(svm_model.zscore.pmm_na_data_5,
+                                               zscore.train.pmm_na_data_5)
+
+conf_matrix.zscore.pmm_na_data_5 <- confusionMatrix(svm_model.zscore.pmm_na_data_5.pred,
+                                                    train.labels)
+
+
+###----------------------------- SVM MODEL PERFORMANCE TESTING -----------------------------###
+
+# Omit NAs log2
+svm_model.log2.omit_na_data <- svm(na.test.labels~.,
+                                   data = log2.test.omit_na_data,
+                                   kernel = "radial",
+                                   cross = 10,
+                                   gamma = 0.2,
+                                   cost = 1,
+                                   fitted = TRUE,
+                                   probability = TRUE,
+                                   type = "C-classification",
+                                   na.action = na.omit)
+
+svm_model.log2.omit_na_data.pred <- predict(svm_model.log2.omit_na_data,
+                                            log2.test.omit_na_data)
+
+conf_matrix.log2.omit_na_data <- confusionMatrix(svm_model.log2.omit_na_data.pred,
+                                                 na.test.labels)
+
+# Omit NAs z-score
+svm_model.zscore.omit_na_data <- svm(na.test.labels~.,
+                                     data = zscore.test.omit_na_data,
+                                     kernel = "radial",
+                                     cross = 10,
+                                     gamma = 0.2,
+                                     cost = 1,
+                                     fitted = TRUE,
+                                     probability = TRUE,
+                                     type = "C-classification",
+                                     na.action = na.omit)
+
+svm_model.zscore.omit_na_data.pred <- predict(svm_model.zscore.omit_na_data,
+                                              zscore.test.omit_na_data)
+
+conf_matrix.zscore.omit_na_data <- confusionMatrix(svm_model.zscore.omit_na_data.pred,
+                                                   na.test.labels)
+
+
+# Zero NAs log2
+svm_model.log2.zero_na_data <- svm(test.labels~.,
+                                   data = log2.test.zero_na_data,
+                                   kernel = "radial",
+                                   cross = 10,
+                                   gamma = 0.2,
+                                   cost = 1,
+                                   fitted = TRUE,
+                                   probability = TRUE,
+                                   type = "C-classification",
+                                   na.action = na.omit)
+
+svm_model.log2.zero_na_data.pred <- predict(svm_model.log2.zero_na_data,
+                                            log2.test.zero_na_data)
+
+conf_matrix.log2.zero_na_data <- confusionMatrix(svm_model.log2.zero_na_data.pred,
+                                                 test.labels)
+
+# Zero NAs zscore
+svm_model.zscore.zero_na_data <- svm(test.labels~.,
+                                     data = zscore.test.zero_na_data,
+                                     kernel = "radial",
+                                     cross = 10,
+                                     gamma = 0.2,
+                                     cost = 1,
+                                     fitted = TRUE,
+                                     probability = TRUE,
+                                     type = "C-classification",
+                                     na.action = na.omit)
+
+svm_model.zscore.zero_na_data.pred <- predict(svm_model.zscore.zero_na_data,
+                                              zscore.test.zero_na_data)
+
+conf_matrix.zscore.zero_na_data <- confusionMatrix(svm_model.zscore.zero_na_data.pred,
+                                                   test.labels)
+
+# Median NAs log2
+svm_model.log2.median_na_data <- svm(test.labels~.,
+                                     data = log2.test.median_na_data,
+                                     kernel = "radial",
+                                     cross = 10,
+                                     gamma = 0.2,
+                                     cost = 1,
+                                     fitted = TRUE,
+                                     probability = TRUE,
+                                     type = "C-classification",
+                                     na.action = na.omit)
+
+svm_model.log2.median_na_data.pred <- predict(svm_model.log2.median_na_data,
+                                              log2.test.median_na_data)
+
+conf_matrix.log2.median_na_data <- confusionMatrix(svm_model.log2.median_na_data.pred,
+                                                   test.labels)
+
+# Median NAs zscore
+svm_model.zscore.median_na_data <- svm(test.labels~.,
+                                       data = zscore.test.median_na_data,
+                                       kernel = "radial",
+                                       cross = 10,
+                                       gamma = 0.2,
+                                       cost = 1,
+                                       fitted = TRUE,
+                                       probability = TRUE,
+                                       type = "C-classification",
+                                       na.action = na.omit)
+
+svm_model.zscore.median_na_data.pred <- predict(svm_model.zscore.median_na_data,
+                                                zscore.test.median_na_data)
+
+conf_matrix.zscore.median_na_data <- confusionMatrix(svm_model.zscore.median_na_data.pred,
+                                                     test.labels)
+
+# Mean NAs log2
+svm_model.log2.mean_na_data <- svm(test.labels~.,
+                                   data = log2.test.mean_na_data,
+                                   kernel = "radial",
+                                   cross = 10,
+                                   gamma = 0.2,
+                                   cost = 1,
+                                   fitted = TRUE,
+                                   probability = TRUE,
+                                   type = "C-classification",
+                                   na.action = na.omit)
+
+svm_model.log2.mean_na_data.pred <- predict(svm_model.log2.mean_na_data,
+                                            log2.test.mean_na_data)
+
+conf_matrix.log2.mean_na_data <- confusionMatrix(svm_model.log2.mean_na_data.pred,
+                                                 test.labels)
+
+# Mean NAs zscore
+svm_model.zscore.mean_na_data <- svm(test.labels~.,
+                                     data = zscore.test.mean_na_data,
+                                     kernel = "radial",
+                                     cross = 10,
+                                     gamma = 0.2,
+                                     cost = 1,
+                                     fitted = TRUE,
+                                     probability = TRUE,
+                                     type = "C-classification",
+                                     na.action = na.omit)
+
+svm_model.zscore.mean_na_data.pred <- predict(svm_model.zscore.mean_na_data,
+                                              zscore.test.mean_na_data)
+
+conf_matrix.zscore.mean_na_data <- confusionMatrix(svm_model.zscore.mean_na_data.pred,
+                                                   test.labels)
+
+# Mode NAs log2
+svm_model.log2.mode_na_data <- svm(test.labels~.,
+                                   data = log2.test.mode_na_data,
+                                   kernel = "radial",
+                                   cross = 10,
+                                   gamma = 0.2,
+                                   cost = 1,
+                                   fitted = TRUE,
+                                   probability = TRUE,
+                                   type = "C-classification",
+                                   na.action = na.omit)
+
+svm_model.log2.mode_na_data.pred <- predict(svm_model.log2.mode_na_data,
+                                            log2.test.mode_na_data)
+
+conf_matrix.log2.mode_na_data <- confusionMatrix(svm_model.log2.mode_na_data.pred,
+                                                 test.labels)
+
+# Mode NAs zscore
+svm_model.zscore.mode_na_data <- svm(test.labels~.,
+                                     data = zscore.test.mode_na_data,
+                                     kernel = "radial",
+                                     cross = 10,
+                                     gamma = 0.2,
+                                     cost = 1,
+                                     fitted = TRUE,
+                                     probability = TRUE,
+                                     type = "C-classification",
+                                     na.action = na.omit)
+
+svm_model.zscore.mode_na_data.pred <- predict(svm_model.zscore.mode_na_data,
+                                              zscore.test.mode_na_data)
+
+conf_matrix.zscore.mode_na_data <- confusionMatrix(svm_model.zscore.mode_na_data.pred,
+                                                   test.labels)
+
+# K-nearest NAs log2
+svm_model.log2.knearest_na_data <- svm(test.labels~.,
+                                       data = log2.test.knearest_na_data,
+                                       kernel = "radial",
+                                       cross = 10,
+                                       gamma = 0.2,
+                                       cost = 1,
+                                       fitted = TRUE,
+                                       probability = TRUE,
+                                       type = "C-classification",
+                                       na.action = na.omit)
+
+svm_model.log2.knearest_na_data.pred <- predict(svm_model.log2.knearest_na_data,
+                                                log2.knearest_na_data)
+
+conf_matrix.log2.knearest_na_data <- confusionMatrix(svm_model.log2.knearest_na_data.pred,
+                                                     test.labels)
+
+# K-nearest NAs zscore
+svm_model.zscore.knearest_na_data <- svm(test.labels~.,
+                                         data = zscore.test.knearest_na_data,
+                                         kernel = "radial",
+                                         cross = 10,
+                                         gamma = 0.2,
+                                         cost = 1,
+                                         fitted = TRUE,
+                                         probability = TRUE,
+                                         type = "C-classification",
+                                         na.action = na.omit)
+
+svm_model.zscore.knearest_na_data.pred <- predict(svm_model.zscore.knearest_na_data,
+                                                  zscore.test.knearest_na_data)
+
+conf_matrix.zscore.knearest_na_data <- confusionMatrix(svm_model.zscore.knearest_na_data.pred,
+                                                       test.labels)
+
+# PMM NAs log2
+# PMM 1
+svm_model.log2.pmm_na_data_1 <- svm(test.labels~.,
+                                    data = log2.test.pmm_na_data_1,
                                     kernel = "radial",
                                     cross = 10,
                                     gamma = 0.2,
@@ -544,23 +886,174 @@ svm_model.zscore.pmm_na_data_5 <- svm(labels~.,
                                     type = "C-classification",
                                     na.action = na.omit)
 
+svm_model.log2.pmm_na_data_1.pred <- predict(svm_model.log2.pmm_na_data_1,
+                                             log2.test.pmm_na_data_1)
+
+conf_matrix.log2.pmm_na_data_1 <- confusionMatrix(svm_model.log2.pmm_na_data_1.pred,
+                                                  test.labels)
+
+## PM 2
+svm_model.log2.pmm_na_data_2 <- svm(test.labels~.,
+                                    data = log2.test.pmm_na_data_2,
+                                    kernel = "radial",
+                                    cross = 10,
+                                    gamma = 0.2,
+                                    cost = 1,
+                                    fitted = TRUE,
+                                    probability = TRUE,
+                                    type = "C-classification",
+                                    na.action = na.omit)
+
+svm_model.log2.pmm_na_data_2.pred <- predict(svm_model.log2.pmm_na_data_2,
+                                             log2.test.pmm_na_data_2)
+
+conf_matrix.log2.pmm_na_data_2 <- confusionMatrix(svm_model.log2.pmm_na_data_2.pred,
+                                                  test.labels)
+
+## PM 3
+svm_model.log2.pmm_na_data_3 <- svm(test.labels~.,
+                                    data = log2.test.pmm_na_data_3,
+                                    kernel = "radial",
+                                    cross = 10,
+                                    gamma = 0.2,
+                                    cost = 1,
+                                    fitted = TRUE,
+                                    probability = TRUE,
+                                    type = "C-classification",
+                                    na.action = na.omit)
+
+svm_model.log2.pmm_na_data_3.pred <- predict(svm_model.log2.pmm_na_data_3,
+                                             log2.test.pmm_na_data_3)
+
+conf_matrix.log2.pmm_na_data_3 <- confusionMatrix(svm_model.log2.pmm_na_data_3.pred,
+                                                  test.labels)
+
+## PM 4
+svm_model.log2.pmm_na_data_4 <- svm(test.labels~.,
+                                    data = log2.test.pmm_na_data_4,
+                                    kernel = "radial",
+                                    cross = 10,
+                                    gamma = 0.2,
+                                    cost = 1,
+                                    fitted = TRUE,
+                                    probability = TRUE,
+                                    type = "C-classification",
+                                    na.action = na.omit)
+
+svm_model.log2.pmm_na_data_4.pred <- predict(svm_model.log2.pmm_na_data_4,
+                                             log2.test.pmm_na_data_4)
+
+conf_matrix.log2.pmm_na_data_4 <- confusionMatrix(svm_model.log2.pmm_na_data_4.pred,
+                                                  test.labels)
+
+## PM 5
+svm_model.log2.pmm_na_data_5 <- svm(test.labels~.,
+                                    data = log2.test.pmm_na_data_5,
+                                    kernel = "radial",
+                                    cross = 10,
+                                    gamma = 0.2,
+                                    cost = 1,
+                                    fitted = TRUE,
+                                    probability = TRUE,
+                                    type = "C-classification",
+                                    na.action = na.omit)
+
+svm_model.log2.pmm_na_data_5.pred <- predict(svm_model.log2.pmm_na_data_5,
+                                             log2.test.pmm_na_data_5)
+
+conf_matrix.log2.pmm_na_data_5 <- confusionMatrix(svm_model.log2.pmm_na_data_5.pred,
+                                                  test.labels)
+
+# PMM NAs zscore
+# PMM 1
+svm_model.zscore.pmm_na_data_1 <- svm(test.labels~.,
+                                      data = zscore.test.pmm_na_data_1,
+                                      kernel = "radial",
+                                      cross = 10,
+                                      gamma = 0.2,
+                                      cost = 1,
+                                      fitted = TRUE,
+                                      probability = TRUE,
+                                      type = "C-classification",
+                                      na.action = na.omit)
+
+svm_model.zscore.pmm_na_data_1.pred <- predict(svm_model.zscore.pmm_na_data_1,
+                                               zscore.test.pmm_na_data_1)
+
+conf_matrix.zscore.pmm_na_data_1 <- confusionMatrix(svm_model.zscore.pmm_na_data_1.pred,
+                                                    test.labels)
+
+## PM 2
+svm_model.zscore.pmm_na_data_2 <- svm(test.labels~.,
+                                      data = zscore.test.pmm_na_data_2,
+                                      kernel = "radial",
+                                      cross = 10,
+                                      gamma = 0.2,
+                                      cost = 1,
+                                      fitted = TRUE,
+                                      probability = TRUE,
+                                      type = "C-classification",
+                                      na.action = na.omit)
+
+svm_model.zscore.pmm_na_data_2.pred <- predict(svm_model.zscore.pmm_na_data_2,
+                                               zscore.test.pmm_na_data_2)
+
+conf_matrix.zscore.pmm_na_data_2 <- confusionMatrix(svm_model.zscore.pmm_na_data_2.pred,
+                                                    test.labels)
+
+## PM 3
+svm_model.zscore.pmm_na_data_3 <- svm(test.labels~.,
+                                      data = zscore.test.pmm_na_data_3,
+                                      kernel = "radial",
+                                      cross = 10,
+                                      gamma = 0.2,
+                                      cost = 1,
+                                      fitted = TRUE,
+                                      probability = TRUE,
+                                      type = "C-classification",
+                                      na.action = na.omit)
+
+svm_model.zscore.pmm_na_data_3.pred <- predict(svm_model.zscore.pmm_na_data_3,
+                                               zscore.test.pmm_na_data_3)
+
+conf_matrix.zscore.pmm_na_data_3 <- confusionMatrix(svm_model.zscore.pmm_na_data_3.pred,
+                                                    test.labels)
+
+## PM 4
+svm_model.zscore.pmm_na_data_4 <- svm(test.labels~.,
+                                      data = zscore.test.pmm_na_data_4,
+                                      kernel = "radial",
+                                      cross = 10,
+                                      gamma = 0.2,
+                                      cost = 1,
+                                      fitted = TRUE,
+                                      probability = TRUE,
+                                      type = "C-classification",
+                                      na.action = na.omit)
+
+svm_model.zscore.pmm_na_data_4.pred <- predict(svm_model.zscore.pmm_na_data_4,
+                                               zscore.test.pmm_na_data_4)
+
+conf_matrix.zscore.pmm_na_data_4 <- confusionMatrix(svm_model.zscore.pmm_na_data_4.pred,
+                                                    test.labels)
+
+## PM 5
+svm_model.zscore.pmm_na_data_5 <- svm(test.labels~.,
+                                      data = zscore.test.pmm_na_data_5,
+                                      kernel = "radial",
+                                      cross = 10,
+                                      gamma = 0.2,
+                                      cost = 1,
+                                      fitted = TRUE,
+                                      probability = TRUE,
+                                      type = "C-classification",
+                                      na.action = na.omit)
+
 svm_model.zscore.pmm_na_data_5.pred <- predict(svm_model.zscore.pmm_na_data_5,
-                                             zscore.pmm_na_data_5)
+                                               zscore.test.pmm_na_data_5)
 
 conf_matrix.zscore.pmm_na_data_5 <- confusionMatrix(svm_model.zscore.pmm_na_data_5.pred,
-                                    labels)
-
-
-
-plot(conf_matrix.zscore.mode_na_data$table)
-
-
-
-
-
-
-
-
+                                                    test.labels)
 
 results = data.frame(
   
@@ -658,7 +1151,7 @@ barplot(counts,
         horiz=TRUE)
 
 
-  barplot(counts, horiz=TRUE,  space = 0.4,  yaxp=c(0,25,1), main = "Title", las=1,  
+barplot(counts, horiz=TRUE,  space = 0.4,  yaxp=c(0,25,1), main = "Title", las=1,  
         cex.names=0.8, ylab="y label")
 
 
